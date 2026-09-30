@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador de API</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #0f172a;
+            --panel: #111c33;
+            --panel-2: #17233d;
+            --border: #2d3b5b;
+            --text: #e5e7eb;
+            --muted: #94a3b8;
+            --primary: #38bdf8;
+            --success: #4ade80;
+            --danger: #fb7185;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            padding: 32px 16px;
+            background: linear-gradient(135deg, #0f172a, #172554);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .container {
+            width: min(1100px, 100%);
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 24px;
+        }
+
+        h1,
+        h2,
+        p {
+            margin-top: 0;
+        }
+
+        h1 {
+            margin-bottom: 8px;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+        }
+
+        header p {
+            color: var(--muted);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 20px;
+        }
+
+        .panel {
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            background: rgba(17, 28, 51, 0.95);
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+        }
+
+        .panel h2 {
+            margin-bottom: 18px;
+            font-size: 1.15rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 150px minmax(0, 1fr);
+            gap: 14px;
+            align-items: center;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            outline: none;
+            background: #0b1328;
+            color: var(--text);
+            font: inherit;
+        }
+
+        input,
+        select {
+            height: 42px;
+            padding: 0 12px;
+        }
+
+        textarea {
+            min-height: 230px;
+            padding: 12px;
+            resize: vertical;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        .body-field {
+            align-self: start;
+            padding-top: 12px;
+        }
+
+        .actions,
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .actions {
+            margin-top: 18px;
+        }
+
+        button {
+            min-height: 40px;
+            padding: 0 15px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            cursor: pointer;
+            background: var(--panel-2);
+            color: var(--text);
+            font: inherit;
+            font-weight: 700;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+
+        button:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .primary {
+            border-color: var(--primary);
+            background: #075985;
+        }
+
+        .secondary {
+            color: var(--muted);
+        }
+
+        .quick-actions {
+            margin-top: 12px;
+        }
+
+        .quick-actions button {
+            min-height: 34px;
+            padding: 0 11px;
+            font-size: 0.82rem;
+        }
+
+        .hint {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.45;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .status {
+            display: inline-flex;
+            min-height: 30px;
+            align-items: center;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: var(--panel-2);
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .status.success {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+        }
+
+        .status.error {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--danger);
+        }
+
+        pre {
+            min-height: 310px;
+            max-height: 520px;
+            overflow: auto;
+            margin: 0;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #080f20;
+            color: #c4f1ff;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 0.88rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 14px 16px;
+            border-left: 4px solid var(--primary);
+            border-radius: 8px;
+            background: rgba(14, 116, 144, 0.15);
+            color: #cbd5e1;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 760px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 7px;
+            }
+
+            .body-field {
+                padding-top: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <header>
+            <h1>Simulador de API</h1>
+            <p>Faça requisições para sua API local sem precisar instalar o Postman.</p>
+        </header>
+
+        <section class="layout">
+            <div class="panel">
+                <h2>Configurar requisição</h2>
+
+                <div class="form-grid">
+                    <label for="baseUrl">URL base</label>
+                    <input id="baseUrl" value="http://localhost:3000" placeholder="http://localhost:3000" />
+
+                    <label for="method">Método</label>
+                    <select id="method">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PATCH</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                    </select>
+
+                    <label for="endpoint">Endpoint</label>
+                    <input id="endpoint" value="/tarefas" placeholder="/tarefas" />
+
+                    <label class="body-field" for="requestBody">Corpo JSON</label>
+                    <textarea id="requestBody" spellcheck="false">{
+  "titulo": "Estudar APIs",
+  "descricao": "Criar uma API local com Express",
+  "prioridade": "alta"
+}</textarea>
+                </div>
+
+                <p class="hint">
+                    Para GET e DELETE, normalmente não é necessário enviar corpo. Para POST, PATCH e PUT, informe um
+                    JSON válido.
+                </p>
+
+                <div class="actions">
+                    <button class="primary" id="sendButton">Enviar requisição</button>
+                    <button class="secondary" id="clearButton" type="button">Limpar resposta</button>
+                </div>
+
+                <h2 style="margin-top: 28px">Exemplos rápidos</h2>
+                <div class="quick-actions">
+                    <button type="button" data-example="list">Listar tarefas</button>
+                    <button type="button" data-example="find">Buscar por id</button>
+                    <button type="button" data-example="create">Criar tarefa</button>
+                    <button type="button" data-example="update">Atualizar tarefa</button>
+                    <button type="button" data-example="delete">Excluir tarefa</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="result-header">
+                    <h2>Resposta</h2>
+                    <span class="status" id="status">Aguardando requisição</span>
+                </div>
+
+                <pre id="response">A resposta da API aparecerá aqui.</pre>
+
+                <div class="info">
+                    Dica: execute <code>npm start</code> e acesse este simulador em
+                    <code>http://localhost:3000/</code>.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const baseUrlInput = document.querySelector("#baseUrl");
+        const methodInput = document.querySelector("#method");
+        const endpointInput = document.querySelector("#endpoint");
+        const requestBodyInput = document.querySelector("#requestBody");
+        const sendButton = document.querySelector("#sendButton");
+        const clearButton = document.querySelector("#clearButton");
+        const statusElement = document.querySelector("#status");
+        const responseElement = document.querySelector("#response");
+
+        function setStatus(text, type = "") {
+            statusElement.textContent = text;
+            statusElement.className = "status " + type;
+        }
+
+        function showResponse(data) {
+            if (typeof data === "string") {
+                responseElement.textContent = data;
+                return;
+            }
+
+            responseElement.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function getUrl() {
+            const baseUrl = baseUrlInput.value.trim().replace(/\/$/, "");
+            const endpoint = endpointInput.value.trim();
+
+            if (!baseUrl) {
+                throw new Error("Informe a URL base da API.");
+            }
+
+            if (!endpoint.startsWith("/")) {
+                return baseUrl + "/" + endpoint;
+            }
+
+            return baseUrl + endpoint;
+        }
+
+        async function sendRequest() {
+            const method = methodInput.value;
+            let url;
+
+            try {
+                url = getUrl();
+
+                const options = { method };
+                const bodyText = requestBodyInput.value.trim();
+
+                if (!["GET", "DELETE"].includes(method) && bodyText) {
+                    try {
+                        options.headers = {
+                            "Content-Type": "application/json"
+                        };
+                        options.body = JSON.stringify(JSON.parse(bodyText));
+                    } catch {
+                        throw new Error("O corpo informado não é um JSON válido.");
+                    }
+                }
+
+                setStatus("Enviando...", "");
+                responseElement.textContent = "Aguardando resposta da API...";
+
+                const response = await fetch(url, options);
+                const contentType = response.headers.get("content-type") || "";
+                const data = contentType.includes("application/json")
+                    ? await response.json()
+                    : await response.text();
+
+                setStatus(
+                    response.status + " " + response.statusText,
+                    response.ok ? "success" : "error"
+                );
+                showResponse(data);
+            } catch (error) {
+                setStatus("Erro na requisição", "error");
+                showResponse({
+                    mensagem: error.message,
+                    dica: "Confirme se o servidor está executando e se a URL está correta.",
+                    url
+                });
+            }
+        }
+
+        function setExample(example) {
+            const examples = {
+                list: {
+                    method: "GET",
+                    endpoint: "/tarefas",
+                    body: ""
+                },
+                find: {
+                    method: "GET",
+                    endpoint: "/tarefas/1",
+                    body: ""
+                },
+                create: {
+                    method: "POST",
+                    endpoint: "/tarefas",
+                    body: JSON.stringify(
+                        {
+                            titulo: "Estudar APIs",
+                            descricao: "Criar uma API local com Express",
+                            prioridade: "alta"
+                        },
+                        null,
+                        2
+                    )
+                },
+                update: {
+                    method: "PATCH",
+                    endpoint: "/tarefas/1",
+                    body: JSON.stringify({ concluida: true }, null, 2)
+                },
+                delete: {
+                    method: "DELETE",
+                    endpoint: "/tarefas/1",
+                    body: ""
+                }
+            };
+
+            const selected = examples[example];
+            methodInput.value = selected.method;
+            endpointInput.value = selected.endpoint;
+            requestBodyInput.value = selected.body;
+            setStatus("Exemplo carregado", "");
+        }
+
+        sendButton.addEventListener("click", sendRequest);
+
+        clearButton.addEventListener("click", () => {
+            setStatus("Aguardando requisição", "");
+            responseElement.textContent = "A resposta da API aparecerá aqui.";
+        });
+
+        document.querySelectorAll("[data-example]").forEach((button) => {
+            button.addEventListener("click", () => {
+                setExample(button.dataset.example);
+            });
+        });
+
+        methodInput.addEventListener("change", () => {
+            const bodyEnabled = !["GET", "DELETE"].includes(methodInput.value);
+            requestBodyInput.disabled = !bodyEnabled;
+            requestBodyInput.style.opacity = bodyEnabled ? "1" : "0.55";
+        });
+
+        methodInput.dispatchEvent(new Event("change"));
+    </script>
+</body>
+
+</html>
