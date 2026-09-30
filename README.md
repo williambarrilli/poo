@@ -51,3 +51,7 @@ curl -X POST http://localhost:3000/tarefas \
 ```
 
 Cada projeto possui seu próprio README com instruções e detalhes adicionais. O arquivo `SimuladorRequest.html` pode ser aberto separadamente para testar as requisições pelo navegador.
+
+## Tutorial de Git
+
+Consulte o [Tutorial de Git](TUTORIAL_GIT.md) para aprender a criar um repositório, fazer commits e publicar um projeto no GitHub.
