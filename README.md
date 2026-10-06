@@ -6,51 +6,19 @@ Exemplos didáticos de APIs com Node.js e Express para praticar servidores HTTP,
 
 | Pasta | Descrição |
 | --- | --- |
-| `api-example-with-class` | API de tarefas usando a classe `Tarefa`. |
-| `api-example-without-class` | A mesma API de tarefas, mas com toda a lógica diretamente no `server.js`, sem classes. |
-| `api-revisao` | Exemplo menor para revisão de rotas e tarefas. |
-| `api-teste` | API de tarefas com um simulador HTTP reutilizável. |
+| `api-teste` | API simples: tudo em um único arquivo (`server.js`), dados em memória. Ponto de partida para quem está vendo Express pela primeira vez. |
+| `api-camadas-com-classe` | A mesma ideia, mas separada por responsabilidade em pastas (`controllers`, `logic`, `repositories`, `models`) e com persistência em arquivo JSON. Mostra como organizar uma API conforme ela cresce. |
+| `api-tudo-no-server` | **Contraexemplo.** A mesma API do `api-camadas-com-classe`, só que tudo dentro de `server.js`. Mostra, com comentários no código, os problemas de não separar em camadas. |
 
-## Executar a API sem classes
+Cada projeto tem seu próprio README com instruções de instalação, rotas e exemplos de requisição.
 
-Entre na pasta do projeto e instale as dependências:
+## Por onde começar
 
-```bash
-cd api-example-without-class
-npm install
-```
+1. Rode o `api-teste` primeiro: é a versão mais direta, sem camadas.
+2. Depois veja o `api-camadas-com-classe`: mesma API, mas com o código dividido por responsabilidade, para entender por que e quando separar em camadas.
+3. Compare com o `api-tudo-no-server`: a mesma API escrita sem essa separação, com os problemas comentados no código.
 
-Inicie o servidor:
-
-```bash
-npm start
-```
-
-Durante o desenvolvimento, use o `nodemon`:
-
-```bash
-npm run dev
-```
-
-A API fica disponível em `http://localhost:3000` e persiste as tarefas em `data/tarefas.json`.
-
-### Rotas disponíveis
-
-- `GET /tarefas`: lista as tarefas;
-- `GET /tarefas/:id`: busca uma tarefa;
-- `POST /tarefas`: cria uma tarefa;
-- `PATCH /tarefas/:id`: atualiza os campos enviados;
-- `DELETE /tarefas/:id`: remove uma tarefa.
-
-Exemplo de criação:
-
-```bash
-curl -X POST http://localhost:3000/tarefas \
-  -H "Content-Type: application/json" \
-  -d '{"titulo":"Estudar Express","prioridade":"alta"}'
-```
-
-Cada projeto possui seu próprio README com instruções e detalhes adicionais. O arquivo `SimuladorRequest.html` pode ser aberto separadamente para testar as requisições pelo navegador.
+O arquivo `SimuladorRequest.html`, na raiz deste repositório, é um cliente HTTP reutilizável para testar qualquer uma das APIs pelo navegador, sem precisar do `curl`.
 
 ## Tutorial de Git
 
