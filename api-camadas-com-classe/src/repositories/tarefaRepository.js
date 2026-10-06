@@ -1,3 +1,9 @@
+// REPOSITORY
+// Única camada que sabe onde e como os dados são guardados: aqui, lendo
+// e escrevendo o arquivo data/tarefa.json. Expõe operações simples
+// (ler, salvar) para quem usa este módulo. Se um dia o armazenamento
+// mudar para um banco de dados, só este arquivo muda — logic e
+// controller continuam chamando ler()/salvar() do mesmo jeito.
 import fs from "node:fs/promises";
 import path from "node:path";
 

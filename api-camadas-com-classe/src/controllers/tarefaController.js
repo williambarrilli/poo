@@ -1,3 +1,9 @@
+// CONTROLLER
+// Faz a ponte entre o Express e o resto da aplicação. Recebe `request` e
+// `response`, extrai o que precisa da requisição (parâmetros, corpo) e
+// chama a camada de logic. Depois traduz o resultado (ou o erro) em uma
+// resposta HTTP: define o status (200, 201, 400, 500...) e o corpo JSON.
+// Não decide regra de negócio aqui — isso é tarefa da logic.
 import * as tarefaLogic from "../logic/tarefaLogic.js";
 import { ErroDeValidacao } from "../models/tarefa.js";
 
