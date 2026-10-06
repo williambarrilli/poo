@@ -14,19 +14,17 @@ export class ErroDeValidacao extends Error {
   }
 }
 
-const PRIORIDADES = ["baixa", "media", "alta"];
-
 // Representa uma tarefa e garante que ela sempre nasce válida.
 export class Tarefa {
-  constructor({ id, titulo, descricao = "", prioridade = "media", concluida = false }) {
+  constructor({
+    id,
+    titulo,
+    descricao = "",
+    prioridade = "media",
+    concluida = false,
+  }) {
     if (typeof titulo !== "string" || titulo.trim() === "") {
       throw new ErroDeValidacao("O campo titulo é obrigatório");
-    }
-
-    if (!PRIORIDADES.includes(prioridade)) {
-      throw new ErroDeValidacao(
-        `O campo prioridade deve ser: ${PRIORIDADES.join(", ")}`,
-      );
     }
 
     this.id = id;
