@@ -30,6 +30,21 @@ app.get("/", tarefaController.obterTarefa);
 app.get("/tarefas", tarefaController.listarTarefas);
 app.post("/tarefas", tarefaController.cadastrarTarefa);
 
+// Só inicia o servidor (app.listen) quando este arquivo é executado
+// diretamente, por exemplo com `node src/server.js` ou `npm start`.
+//
+// `import.meta.url` é a URL deste próprio arquivo (algo como
+// "file:///.../src/server.js"). `fileURLToPath` converte essa URL para
+// um caminho comum de arquivo, para poder comparar com
+// `process.argv[1]`, que é o caminho do arquivo que o Node recebeu para
+// rodar.
+//
+// Se alguém importar este arquivo de outro lugar (um arquivo de teste,
+// por exemplo, com `import app from "./server.js"`), o arquivo
+// executado pelo Node deixa de ser o server.js, então a condição é
+// falsa e `app.listen` não roda. Isso permite testar as rotas de `app`
+// sem abrir uma porta de verdade, e evita abrir duas portas por engano
+// se o servidor for importado em outro script.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   app.listen(PORTA, () => {
     console.log(`API disponível em http://localhost:${PORTA}`);
