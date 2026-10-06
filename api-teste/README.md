@@ -2,7 +2,7 @@
 
 Este projeto é uma API simples para os alunos entenderem os conceitos básicos de um servidor HTTP com Node.js e Express.
 
-Além da API, o projeto possui o [SimuladorRequest.html](SimuladorRequest.html), um cliente HTTP estático para testar requisições. Ele é independente da API, não é servido pelo `server.js` e pode ser copiado para testar qualquer outro projeto.
+Além da API, o projeto possui o [SimuladorRequest.html](../SimuladorRequest.html), um cliente HTTP estático para testar requisições. Ele é independente da API, não é servido pelo `server.js` e pode ser copiado para testar qualquer outro projeto.
 
 ## Tecnologias
 
@@ -13,12 +13,13 @@ Além da API, o projeto possui o [SimuladorRequest.html](SimuladorRequest.html),
 ## Estrutura do projeto
 
 ```text
-api-teste/
-├── SimuladorRequest.html # Cliente HTTP reutilizável
-├── src/
-│   └── server.js     # Servidor Express e rotas da API
-├── package.json      # Scripts e dependências do projeto
-└── package-lock.json # Versões exatas das dependências instaladas
+poo/
+├── SimuladorRequest.html # Cliente HTTP reutilizável (na raiz do repositório)
+└── api-teste/
+    ├── src/
+    │   └── server.js     # Servidor Express e rotas da API
+    ├── package.json      # Scripts e dependências do projeto
+    └── package-lock.json # Versões exatas das dependências instaladas
 ```
 
 ## Como executar
@@ -181,7 +182,7 @@ Se o ID não existir, a API retorna status `404`.
 
 ## Como o `SimuladorRequest.html` chama a API
 
-O arquivo [SimuladorRequest.html](SimuladorRequest.html) possui campos para:
+O arquivo [SimuladorRequest.html](../SimuladorRequest.html) possui campos para:
 
 - URL base;
 - método HTTP;
