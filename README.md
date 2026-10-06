@@ -10,6 +10,7 @@ Exemplos didáticos de APIs com Node.js e Express para praticar servidores HTTP,
 | `api-example-without-class` | A mesma API de tarefas, mas com toda a lógica diretamente no `server.js`, sem classes. |
 | `api-revisao` | Exemplo menor para revisão de rotas e tarefas. |
 | `api-teste` | API de tarefas com um simulador HTTP reutilizável. |
+| `api-camadas-com-classe` | Exemplo resolvido do esqueleto `api-desenvolvimento`: controller, logic, repository e a classe `Tarefa` com validação. |
 
 ## Executar a API sem classes
 
