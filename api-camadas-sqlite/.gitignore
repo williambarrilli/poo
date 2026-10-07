@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+!.env.example
+*.log
+
+# Banco gerado a partir de data/banco.sql (não versionar)
+data/*.db
+data/*.db-*
