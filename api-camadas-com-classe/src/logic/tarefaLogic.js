@@ -29,7 +29,8 @@ export async function cadastrarTarefa(dados) {
     descricao: dados.descricao,
     prioridade: dados.prioridade,
   });
+  tarefas.push(novaTarefa);
 
-  await tarefaRepository.salvar([...tarefas, novaTarefa]);
+  await tarefaRepository.salvar(tarefas);
   return novaTarefa;
 }
