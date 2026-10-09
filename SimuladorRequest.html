@@ -4,163 +4,1375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Cliente HTTP</title>
+    <title>Simulador de Requisições</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { color-scheme: dark; font-family: Arial, sans-serif; }
+        /* Cores da identidade CESURG: azul institucional e as três cores da logo
+           (verde, amarelo e vermelho), usadas para os métodos e os status HTTP. */
+        :root {
+            color-scheme: light;
+            --fundo: #EEF1F5;
+            --superficie: #FFFFFF;
+            --superficie-2: #F6F8FA;
+            --linha: #D5DBE3;
+            --texto: #1B2433;
+            --texto-2: #5A6577;
+            --marca: #354C6E;
+            --marca-suave: #E3E9F2;
+            --get: #2F7D3B;
+            --post: #354C6E;
+            --put: #9A6400;
+            --delete: #B8352A;
+            --ok: #2F7D3B;
+            --ok-suave: #E2F1E4;
+            --aviso: #8A5A00;
+            --aviso-suave: #FBF0D5;
+            --erro: #B8352A;
+            --erro-suave: #F8E1DE;
+            --codigo-fundo: #1C2430;
+            --codigo-texto: #E6EAF0;
+            --codigo-chave: #8EC5FF;
+            --codigo-texto-str: #9FD7A8;
+            --codigo-num: #F5C76A;
+            --codigo-lit: #F29B90;
+            --codigo-apagado: #8A96A8;
+            --foco: #2B6CB0;
+            --sans: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+            --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                color-scheme: dark;
+                --fundo: #12171E;
+                --superficie: #1A212B;
+                --superficie-2: #212935;
+                --linha: #2E3846;
+                --texto: #E6EAF0;
+                --texto-2: #A2ADBD;
+                --marca: #8FAEDB;
+                --marca-suave: #243247;
+                --get: #6CC27A;
+                --post: #8FAEDB;
+                --put: #F2B630;
+                --delete: #F08A7E;
+                --ok: #6CC27A;
+                --ok-suave: #1D3323;
+                --aviso: #F2B630;
+                --aviso-suave: #3A2F14;
+                --erro: #F08A7E;
+                --erro-suave: #3C2220;
+                --codigo-fundo: #0E1319;
+                --foco: #8FAEDB;
+            }
+        }
+
         * { box-sizing: border-box; }
-        body { width: min(760px, calc(100% - 32px)); margin: 0 auto; padding: 24px 0; background: #111827; color: #e5e7eb; }
-        h1 { margin: 0 0 6px; }
-        p { color: #9ca3af; }
-        .layout { display: grid; grid-template-columns: 1fr; gap: 16px; }
-        form { display: grid; gap: 12px; padding: 18px; background: #1f2937; border-radius: 10px; }
-        .url { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        label { display: grid; min-width: 0; gap: 5px; color: #d1d5db; font-size: .9rem; }
-        input, select, textarea, button { min-width: 0; border: 1px solid #4b5563; border-radius: 6px; padding: 10px; background: #111827; color: #f9fafb; font: inherit; }
-        input, select, textarea { width: 100%; }
-        textarea { min-height: 110px; resize: vertical; font-family: monospace; }
-        button { cursor: pointer; background: #2563eb; border-color: #2563eb; font-weight: bold; }
-        button:hover { background: #1d4ed8; }
-        button:disabled, textarea:disabled { opacity: .5; cursor: not-allowed; }
-        .result { min-width: 0; padding: 18px; background: #1f2937; border-radius: 10px; }
-        #status { margin: 0 0 8px; font-weight: bold; }
-        #status.ok { color: #4ade80; }
-        #status.error { color: #fb7185; }
-        pre { min-height: 240px; max-height: 600px; overflow: auto; margin: 0; padding: 14px; background: #030712; border-radius: 6px; white-space: pre-wrap; word-break: break-word; }
-        code { color: #93c5fd; }
-        @media (max-width: 650px) {
-            body { width: calc(100% - 32px); padding: 16px 0; }
+
+        body {
+            margin: 0;
+            background: var(--fundo);
+            color: var(--texto);
+            font: 16px/1.5 var(--sans);
+        }
+
+        .pagina {
+            width: min(1360px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 24px 0 48px;
+        }
+
+        header.topo {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 8px 24px;
+            margin-bottom: 20px;
+        }
+
+        h1 { margin: 0; font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.01em; }
+        h1 span { color: var(--marca); }
+        .subtitulo { margin: 4px 0 0; color: var(--texto-2); max-width: 62ch; }
+        .atalho-teclado { color: var(--texto-2); font-size: .875rem; }
+
+        kbd {
+            font: 500 .8rem var(--mono);
+            padding: 1px 6px;
+            border: 1px solid var(--linha);
+            border-bottom-width: 2px;
+            border-radius: 4px;
+            background: var(--superficie);
+        }
+
+        .colunas {
+            display: grid;
+            grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .painel {
+            background: var(--superficie);
+            border: 1px solid var(--linha);
+            border-radius: 10px;
+            padding: 20px;
+            min-width: 0;
+        }
+
+        .painel + .painel { margin-top: 20px; }
+
+        h2 { margin: 0 0 14px; font-size: 1.125rem; }
+        h3 { margin: 0; font-size: 1rem; }
+
+        .rotulo { display: block; font-weight: 600; font-size: .9rem; margin-bottom: 6px; }
+        .ajuda { color: var(--texto-2); font-size: .875rem; margin: 6px 0 0; }
+
+        input, select, textarea, button { font: inherit; color: inherit; }
+
+        input[type="text"], input[type="url"], select, textarea {
+            width: 100%;
+            min-width: 0;
+            padding: 9px 11px;
+            border: 1px solid var(--linha);
+            border-radius: 6px;
+            background: var(--superficie-2);
+        }
+
+        input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible {
+            outline: 2px solid var(--foco);
+            outline-offset: 2px;
+        }
+
+        .mono { font-family: var(--mono); font-size: .925rem; }
+
+        button {
+            cursor: pointer;
+            border: 1px solid var(--linha);
+            border-radius: 6px;
+            background: var(--superficie);
+            padding: 7px 12px;
+        }
+
+        button:hover { background: var(--superficie-2); }
+
+        .botao-principal {
+            background: var(--marca);
+            border-color: var(--marca);
+            color: #FFFFFF;
+            font-weight: 600;
+            padding: 10px 18px;
+        }
+
+        .botao-principal:hover { background: var(--marca); filter: brightness(1.1); }
+        @media (prefers-color-scheme: dark) { .botao-principal { color: #12171E; } }
+        .botao-principal:disabled { opacity: .6; cursor: wait; }
+
+        .botao-texto {
+            border: 0;
+            background: none;
+            color: var(--marca);
+            padding: 4px 6px;
+            font-weight: 500;
+        }
+
+        .botao-texto:hover { background: var(--marca-suave); }
+
+        /* ---------- Atalhos de rotas ---------- */
+        .atalhos { display: grid; gap: 10px; margin-bottom: 18px; }
+        .grupo-atalho { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .grupo-atalho > span { font-size: .875rem; color: var(--texto-2); min-width: 72px; }
+
+        .atalho {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            font-size: .875rem;
+            border-radius: 999px;
+        }
+
+        .atalho b { font: 600 .72rem var(--mono); }
+
+        /* ---------- Métodos ---------- */
+        .metodos { display: flex; flex-wrap: wrap; gap: 6px; }
+
+        .metodo {
+            font: 600 .9rem var(--mono);
+            padding: 7px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--linha);
+            background: var(--superficie);
+            color: var(--cor-metodo);
+        }
+
+        .metodo[aria-pressed="true"] {
+            background: var(--cor-metodo);
+            border-color: var(--cor-metodo);
+            color: var(--superficie);
+        }
+
+        [data-metodo="GET"] { --cor-metodo: var(--get); }
+        [data-metodo="POST"] { --cor-metodo: var(--post); }
+        [data-metodo="PUT"], [data-metodo="PATCH"] { --cor-metodo: var(--put); }
+        [data-metodo="DELETE"] { --cor-metodo: var(--delete); }
+
+        .explica-metodo {
+            margin: 10px 0 0;
+            padding: 10px 12px;
+            border-left: 3px solid var(--cor-metodo);
+            background: var(--superficie-2);
+            border-radius: 0 6px 6px 0;
+            font-size: .925rem;
+        }
+
+        /* ---------- Endereço ---------- */
+        .linha-url {
+            display: grid;
+            grid-template-columns: minmax(150px, .8fr) minmax(0, 1.4fr);
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .url-final {
+            margin-top: 10px;
+            padding: 8px 11px;
+            border-radius: 6px;
+            background: var(--superficie-2);
+            font: .875rem var(--mono);
+            overflow-wrap: anywhere;
+            color: var(--texto-2);
+        }
+
+        .url-final strong { color: var(--texto); font-weight: 500; }
+
+        .bloco { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--linha); }
+        .cabecalho-bloco { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+
+        .tabela-campos { display: grid; gap: 8px; }
+
+        .linha-campo {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 140px minmax(0, 1.3fr) 36px;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .linha-param { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr) 36px; }
+        .linha-param-rota { grid-template-columns: 110px minmax(0, 1fr); }
+
+        .nome-param {
+            font: 600 .9rem var(--mono);
+            color: var(--marca);
+            overflow-wrap: anywhere;
+        }
+
+        .remover {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            color: var(--texto-2);
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+
+        .remover:hover { color: var(--erro); border-color: var(--erro); }
+
+        .vazio { color: var(--texto-2); font-size: .9rem; margin: 0; }
+
+        /* ---------- Body ---------- */
+        .abas { display: inline-flex; border: 1px solid var(--linha); border-radius: 6px; overflow: hidden; }
+        .abas button { border: 0; border-radius: 0; padding: 6px 12px; font-size: .875rem; }
+        .abas button + button { border-left: 1px solid var(--linha); }
+        .abas button[aria-selected="true"] { background: var(--marca-suave); color: var(--marca); font-weight: 600; }
+
+        textarea.json {
+            min-height: 180px;
+            resize: vertical;
+            font: .9rem/1.55 var(--mono);
+            tab-size: 2;
+        }
+
+        .mensagem {
+            margin: 10px 0 0;
+            padding: 9px 12px;
+            border-radius: 6px;
+            font-size: .9rem;
+        }
+
+        .mensagem.ok { background: var(--ok-suave); color: var(--ok); }
+        .mensagem.aviso { background: var(--aviso-suave); color: var(--aviso); }
+        .mensagem.erro { background: var(--erro-suave); color: var(--erro); }
+        .mensagem code { font-family: var(--mono); font-weight: 600; }
+
+        details.avancado summary { cursor: pointer; font-weight: 600; font-size: .95rem; }
+        details.avancado[open] summary { margin-bottom: 10px; }
+
+        .enviar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* ---------- Mensagem HTTP (o que vai pela rede) ---------- */
+        .http {
+            margin: 0;
+            padding: 16px;
+            border-radius: 8px;
+            background: var(--codigo-fundo);
+            color: var(--codigo-texto);
+            font: .875rem/1.6 var(--mono);
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            max-height: 480px;
+            overflow: auto;
+        }
+
+        .http .linha-inicial { color: #FFFFFF; font-weight: 600; }
+        .http .cab-nome { color: var(--codigo-chave); }
+        .http .comentario { color: var(--codigo-apagado); font-style: italic; }
+        .http .k { color: var(--codigo-chave); }
+        .http .s { color: var(--codigo-texto-str); }
+        .http .n { color: var(--codigo-num); }
+        .http .l { color: var(--codigo-lit); }
+
+        .legenda-http {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 12px;
+            margin: 12px 0 0;
+            font-size: .875rem;
+            color: var(--texto-2);
+        }
+
+        .legenda-http dt { font-weight: 600; color: var(--texto); }
+        .legenda-http dd { margin: 0; }
+
+        .curl { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; }
+        .curl pre { flex: 1; max-height: 160px; font-size: .8rem; }
+
+        /* ---------- Resposta ---------- */
+        .resumo-resposta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 12px; }
+
+        .status {
+            font: 600 1.1rem var(--mono);
+            padding: 4px 12px;
+            border-radius: 6px;
+        }
+
+        .status.s2 { background: var(--ok-suave); color: var(--ok); }
+        .status.s4 { background: var(--aviso-suave); color: var(--aviso); }
+        .status.s5, .status.falha { background: var(--erro-suave); color: var(--erro); }
+        .status.espera { background: var(--superficie-2); color: var(--texto-2); }
+
+        .metricas { color: var(--texto-2); font-size: .875rem; }
+
+        .explicacao {
+            margin: 0 0 14px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            background: var(--superficie-2);
+        }
+
+        .explicacao p { margin: 0; }
+        .explicacao p + p { margin-top: 6px; }
+        .explicacao ul { margin: 6px 0 0; padding-left: 20px; }
+        .explicacao code { font-family: var(--mono); font-size: .9em; }
+
+        .tabela-resposta-wrap { overflow: auto; max-height: 480px; border: 1px solid var(--linha); border-radius: 8px; }
+        table.dados { border-collapse: collapse; width: 100%; font-size: .875rem; }
+        table.dados th, table.dados td { padding: 7px 10px; border-bottom: 1px solid var(--linha); text-align: left; vertical-align: top; }
+        table.dados th { position: sticky; top: 0; background: var(--superficie-2); font: 600 .825rem var(--mono); }
+        table.dados td { font-family: var(--mono); overflow-wrap: anywhere; }
+
+        .lista-historico { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+
+        .lista-historico button {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 70px minmax(0, 1fr) auto;
+            gap: 10px;
+            align-items: center;
+            text-align: left;
+            font-size: .875rem;
+        }
+
+        .lista-historico .m { font: 600 .8rem var(--mono); color: var(--cor-metodo); }
+        .lista-historico .c { font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .lista-historico .st { font: 600 .8rem var(--mono); }
+        .st.s2 { color: var(--ok); }
+        .st.s4 { color: var(--aviso); }
+        .st.s5, .st.falha { color: var(--erro); }
+
+        [hidden] { display: none !important; }
+
+        @media (max-width: 1000px) {
+            .colunas { grid-template-columns: minmax(0, 1fr); }
+        }
+
+        @media (max-width: 640px) {
+            .pagina { width: calc(100% - 32px); padding-top: 16px; }
+            .painel { padding: 16px; }
+            .linha-url { grid-template-columns: minmax(0, 1fr); }
+            .linha-campo { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px; }
+            .linha-campo .valor-campo { grid-column: 1 / 3; }
+            .linha-campo .remover { grid-row: 1; grid-column: 3; }
+            .lista-historico button { grid-template-columns: 60px minmax(0, 1fr); }
+            .lista-historico .st { grid-column: 2; }
+            .curl { flex-direction: column; }
+            .curl pre { width: 100%; }
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .status { transition: background-color .2s, color .2s; }
         }
     </style>
 </head>
 
 <body>
-    <h1>Cliente HTTP</h1>
-    <p>Informe os dados da requisição para testar qualquer API acessível pelo navegador.</p>
+    <div class="pagina">
+        <header class="topo">
+            <div>
+                <h1>Simulador de <span>Requisições</span></h1>
+                <p class="subtitulo">Monte uma requisição para a sua API, veja exatamente o que vai pela rede e entenda a resposta que voltou.</p>
+            </div>
+            <p class="atalho-teclado"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> envia a requisição</p>
+        </header>
 
-    <main class="layout">
-        <form id="requestForm">
-            <div class="url">
-                <label>URL base
-                    <input id="baseUrl" type="url" value="http://localhost:3000" required>
-                </label>
-                <label>Endpoint
-                    <input id="endpoint" value="/tarefas" placeholder="/usuarios/1">
-                </label>
-                <label>Método
-                    <select id="method">
-                        <option>GET</option>
-                        <option>POST</option>
-                        <option>PUT</option>
-                        <option>PATCH</option>
-                        <option>DELETE</option>
-                        <option>OPTIONS</option>
-                    </select>
-                </label>
+        <div class="colunas">
+            <!-- ======================= COLUNA: MONTAR ======================= -->
+            <div>
+                <form class="painel" id="formulario" novalidate>
+                    <h2>1. Monte a requisição</h2>
+
+                    <div class="atalhos" id="atalhos" aria-label="Rotas prontas"></div>
+
+                    <span class="rotulo" id="rotulo-metodo">Método</span>
+                    <div class="metodos" role="group" aria-labelledby="rotulo-metodo" id="metodos"></div>
+                    <p class="explica-metodo" id="explicaMetodo"></p>
+
+                    <div class="linha-url">
+                        <label>
+                            <span class="rotulo">Endereço da API</span>
+                            <input type="url" id="baseUrl" class="mono" value="http://localhost:3000" spellcheck="false">
+                        </label>
+                        <label>
+                            <span class="rotulo">Caminho (rota)</span>
+                            <input type="text" id="caminho" class="mono" value="/tarefas" spellcheck="false" placeholder="/tarefas/:id">
+                        </label>
+                    </div>
+                    <p class="ajuda">Use <code class="mono">:nome</code> no caminho para criar um parâmetro, por exemplo <code class="mono">/tarefas/:id</code>.</p>
+
+                    <div class="bloco" id="blocoParamsRota" hidden>
+                        <div class="cabecalho-bloco"><h3>Parâmetros da rota</h3></div>
+                        <div class="tabela-campos" id="paramsRota"></div>
+                        <p class="ajuda">No Express, cada um chega em <code class="mono">request.params</code>.</p>
+                    </div>
+
+                    <div class="bloco">
+                        <div class="cabecalho-bloco">
+                            <h3>Query params <span class="ajuda">(opcional)</span></h3>
+                            <button type="button" class="botao-texto" id="adicionarQuery">+ Adicionar filtro</button>
+                        </div>
+                        <div class="tabela-campos" id="paramsQuery"></div>
+                        <p class="ajuda">Vão depois do <code class="mono">?</code> no endereço e chegam em <code class="mono">request.query</code>. Use para filtrar listas.</p>
+                    </div>
+
+                    <div class="bloco" id="blocoBody">
+                        <div class="cabecalho-bloco">
+                            <h3>Body <span class="ajuda" id="bodyOpcional">(dados enviados)</span></h3>
+                            <div class="abas" role="tablist" aria-label="Como montar o body">
+                                <button type="button" role="tab" id="abaCampos" aria-selected="true">Campos</button>
+                                <button type="button" role="tab" id="abaJson" aria-selected="false">JSON</button>
+                            </div>
+                        </div>
+
+                        <div id="modoCampos">
+                            <div class="tabela-campos" id="camposBody"></div>
+                            <div class="cabecalho-bloco" style="margin-top:10px">
+                                <button type="button" class="botao-texto" id="adicionarCampo">+ Adicionar campo</button>
+                                <span>
+                                    <button type="button" class="botao-texto" id="modeloTarefa">Modelo de tarefa</button>
+                                    <button type="button" class="botao-texto" id="modeloUsuario">Modelo de usuário</button>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div id="modoJson" hidden>
+                            <textarea id="bodyJson" class="json" spellcheck="false" aria-label="Body em JSON" placeholder='{ "titulo": "Estudar SQL" }'></textarea>
+                            <div class="cabecalho-bloco" style="margin-top:8px">
+                                <button type="button" class="botao-texto" id="formatarJson">Formatar JSON</button>
+                            </div>
+                        </div>
+
+                        <div id="mensagemBody" role="status"></div>
+                        <p class="ajuda">No Express, o body chega em <code class="mono">request.body</code> (precisa do <code class="mono">app.use(express.json())</code>).</p>
+                    </div>
+
+                    <div class="bloco" id="semBody" hidden>
+                        <p class="vazio" id="textoSemBody"></p>
+                    </div>
+
+                    <div class="bloco">
+                        <details class="avancado">
+                            <summary>Cabeçalhos extras (avançado)</summary>
+                            <div class="tabela-campos" id="cabecalhos"></div>
+                            <button type="button" class="botao-texto" id="adicionarCabecalho" style="margin-top:8px">+ Adicionar cabeçalho</button>
+                            <p class="ajuda">O <code class="mono">Content-Type: application/json</code> é colocado sozinho quando há body.</p>
+                        </details>
+                    </div>
+
+                    <div class="url-final" aria-live="polite">Vai para: <strong id="urlFinal"></strong></div>
+
+                    <div class="enviar">
+                        <button type="submit" class="botao-principal" id="botaoEnviar">Enviar requisição</button>
+                        <span id="mensagemEnvio" class="ajuda" role="status"></span>
+                    </div>
+                </form>
+
+                <section class="painel" aria-labelledby="titulo-rede">
+                    <h2 id="titulo-rede">2. O que vai pela rede</h2>
+                    <pre class="http" id="httpRequisicao"></pre>
+                    <dl class="legenda-http">
+                        <dt>Linha 1</dt><dd>método, caminho e versão do protocolo</dd>
+                        <dt>Cabeçalhos</dt><dd>informações extras, como o tipo do conteúdo</dd>
+                        <dt>Linha vazia</dt><dd>separa os cabeçalhos do body</dd>
+                    </dl>
+                    <div class="curl">
+                        <pre class="http" id="curl" aria-label="Comando curl equivalente"></pre>
+                        <button type="button" id="copiarCurl">Copiar curl</button>
+                    </div>
+                    <p class="ajuda">O mesmo pedido em um comando de terminal (Linux, macOS ou Git Bash).</p>
+                </section>
             </div>
 
-            <label>Cabeçalhos JSON (opcional)
-                <textarea id="headers" placeholder='{"Authorization":"Bearer seu-token"}'></textarea>
-            </label>
+            <!-- ======================= COLUNA: RESPOSTA ======================= -->
+            <div>
+                <section class="painel" aria-labelledby="titulo-resposta" aria-live="polite">
+                    <h2 id="titulo-resposta">3. Resposta</h2>
+                    <div class="resumo-resposta">
+                        <span class="status espera" id="status">Nada enviado ainda</span>
+                        <span class="metricas" id="metricas"></span>
+                    </div>
+                    <div class="explicacao" id="explicacao">
+                        <p>Escolha uma rota pronta acima ou monte a sua, e clique em <strong>Enviar requisição</strong>. A resposta da API aparece aqui, com o significado do código de status.</p>
+                    </div>
 
-            <label id="bodyLabel">Corpo JSON (opcional)
-                <textarea id="body" placeholder='{"nome":"Maria"}'></textarea>
-            </label>
+                    <div id="areaResposta" hidden>
+                        <div class="cabecalho-bloco">
+                            <div class="abas" role="tablist" aria-label="Como ver a resposta">
+                                <button type="button" role="tab" id="verCorpo" aria-selected="true">Body</button>
+                                <button type="button" role="tab" id="verTabela" aria-selected="false">Tabela</button>
+                                <button type="button" role="tab" id="verCabecalhos" aria-selected="false">Cabeçalhos</button>
+                            </div>
+                            <button type="button" class="botao-texto" id="copiarResposta">Copiar body</button>
+                        </div>
+                        <pre class="http" id="respostaCorpo"></pre>
+                        <div class="tabela-resposta-wrap" id="respostaTabela" hidden></div>
+                        <pre class="http" id="respostaCabecalhos" hidden></pre>
+                    </div>
+                </section>
 
-            <button type="submit" id="sendButton">Enviar requisição</button>
-        </form>
-
-        <section class="result">
-            <div id="status">Aguardando requisição</div>
-            <pre id="response">A resposta aparecerá aqui.</pre>
-        </section>
-    </main>
+                <section class="painel" aria-labelledby="titulo-historico">
+                    <div class="cabecalho-bloco">
+                        <h2 id="titulo-historico" style="margin:0">Histórico</h2>
+                        <button type="button" class="botao-texto" id="limparHistorico">Limpar</button>
+                    </div>
+                    <ul class="lista-historico" id="historico"></ul>
+                    <p class="vazio" id="historicoVazio">As últimas requisições aparecem aqui. Clique em uma para repetir.</p>
+                </section>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const form = document.querySelector("#requestForm");
-        const baseUrl = document.querySelector("#baseUrl");
-        const endpoint = document.querySelector("#endpoint");
-        const method = document.querySelector("#method");
-        const headersInput = document.querySelector("#headers");
-        const bodyInput = document.querySelector("#body");
-        const bodyLabel = document.querySelector("#bodyLabel");
-        const status = document.querySelector("#status");
-        const responseOutput = document.querySelector("#response");
-        const sendButton = document.querySelector("#sendButton");
+        // =====================================================================
+        // DADOS FIXOS
+        // =====================================================================
 
-        function hasBody() {
-            return !["GET", "DELETE", "OPTIONS"].includes(method.value);
+        const METODOS = {
+            GET: { body: false, texto: "<b>GET</b> busca dados sem alterar nada. Não envia body: para filtrar, use query params." },
+            POST: { body: true, texto: "<b>POST</b> cria um recurso novo. Os dados vão no body. Sucesso costuma ser <code>201 Created</code>." },
+            PUT: { body: true, texto: "<b>PUT</b> substitui o recurso inteiro. Envie todos os campos no body." },
+            PATCH: { body: true, texto: "<b>PATCH</b> altera só parte do recurso. Envie no body apenas os campos que mudam." },
+            DELETE: { body: false, texto: "<b>DELETE</b> remove um recurso. Normalmente o id vai no caminho e não há body." },
+        };
+
+        const ATALHOS = [
+            {
+                grupo: "Tarefas",
+                rotas: [
+                    { nome: "Listar", metodo: "GET", caminho: "/tarefas" },
+                    { nome: "Buscar", metodo: "GET", caminho: "/tarefas/:id", params: { id: "1" } },
+                    { nome: "Filtrar", metodo: "GET", caminho: "/tarefas", query: [["concluida", "true"]] },
+                    {
+                        nome: "Criar", metodo: "POST", caminho: "/tarefas",
+                        body: { titulo: "Estudar SQL", descricao: "Revisar SELECT e INSERT", prioridade: "media", concluida: false },
+                    },
+                    { nome: "Atualizar", metodo: "PATCH", caminho: "/tarefas/:id", params: { id: "1" }, body: { concluida: true } },
+                    { nome: "Remover", metodo: "DELETE", caminho: "/tarefas/:id", params: { id: "1" } },
+                ],
+            },
+            {
+                grupo: "Usuários",
+                rotas: [
+                    { nome: "Listar", metodo: "GET", caminho: "/usuarios" },
+                    { nome: "Criar", metodo: "POST", caminho: "/usuarios", body: { nome: "Carla", email: "carla@email.com" } },
+                    { nome: "Resumo", metodo: "GET", caminho: "/usuarios/:id/resumo", params: { id: "1" } },
+                ],
+            },
+        ];
+
+        const TIPOS = [
+            ["texto", "Texto"],
+            ["numero", "Número"],
+            ["booleano", "true / false"],
+            ["nulo", "null"],
+            ["json", "Lista ou objeto"],
+        ];
+
+        const CHAVE_HISTORICO = "simulador-requisicoes-historico";
+
+        // =====================================================================
+        // ESTADO
+        // =====================================================================
+
+        const estado = {
+            metodo: "GET",
+            modoBody: "campos", // "campos" ou "json"
+            valoresParams: {},  // valores digitados para :id, :nome...
+        };
+
+        const $ = (seletor) => document.querySelector(seletor);
+
+        const elementos = {
+            formulario: $("#formulario"),
+            metodos: $("#metodos"),
+            explicaMetodo: $("#explicaMetodo"),
+            baseUrl: $("#baseUrl"),
+            caminho: $("#caminho"),
+            blocoParamsRota: $("#blocoParamsRota"),
+            paramsRota: $("#paramsRota"),
+            paramsQuery: $("#paramsQuery"),
+            blocoBody: $("#blocoBody"),
+            semBody: $("#semBody"),
+            textoSemBody: $("#textoSemBody"),
+            camposBody: $("#camposBody"),
+            bodyJson: $("#bodyJson"),
+            modoCampos: $("#modoCampos"),
+            modoJson: $("#modoJson"),
+            abaCampos: $("#abaCampos"),
+            abaJson: $("#abaJson"),
+            mensagemBody: $("#mensagemBody"),
+            cabecalhos: $("#cabecalhos"),
+            urlFinal: $("#urlFinal"),
+            botaoEnviar: $("#botaoEnviar"),
+            mensagemEnvio: $("#mensagemEnvio"),
+            httpRequisicao: $("#httpRequisicao"),
+            curl: $("#curl"),
+            status: $("#status"),
+            metricas: $("#metricas"),
+            explicacao: $("#explicacao"),
+            areaResposta: $("#areaResposta"),
+            respostaCorpo: $("#respostaCorpo"),
+            respostaTabela: $("#respostaTabela"),
+            respostaCabecalhos: $("#respostaCabecalhos"),
+            historico: $("#historico"),
+            historicoVazio: $("#historicoVazio"),
+        };
+
+        // =====================================================================
+        // UTILITÁRIOS
+        // =====================================================================
+
+        function escapar(texto) {
+            return String(texto)
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll('"', "&quot;");
         }
 
-        function updateBodyField() {
-            const enabled = hasBody();
-            bodyLabel.hidden = !enabled;
-            bodyInput.disabled = !enabled;
+        // Pinta um JSON já formatado: chaves, textos, números e true/false/null.
+        function colorirJson(texto) {
+            return escapar(texto).replace(
+                /(&quot;(?:\\.|[^\\&]|&(?!quot;))*?&quot;)(\s*:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+                (trecho, str, doisPontos, literal, numero) => {
+                    if (str) return doisPontos ? `<span class="k">${str}</span>${doisPontos}` : `<span class="s">${str}</span>`;
+                    if (literal) return `<span class="l">${literal}</span>`;
+                    return `<span class="n">${numero}</span>`;
+                },
+            );
         }
 
-        function makeUrl() {
-            const base = baseUrl.value.trim().replace(/\/+$/, "");
-            const path = endpoint.value.trim().replace(/^\/+/, "");
-
-            if (!base) throw new Error("Informe a URL base.");
-            return path ? `${base}/${path}` : base;
+        function criarElemento(tag, propriedades = {}, filhos = []) {
+            const elemento = document.createElement(tag);
+            Object.assign(elemento, propriedades);
+            for (const filho of filhos) elemento.append(filho);
+            return elemento;
         }
 
-        function parseJson(value, fieldName) {
-            if (!value.trim()) return {};
-            try {
-                return JSON.parse(value);
-            } catch {
-                throw new Error(`${fieldName} precisa ser um JSON válido.`);
+        function botaoRemover(rotulo, aoClicar) {
+            const botao = criarElemento("button", { type: "button", className: "remover", textContent: "×" });
+            botao.setAttribute("aria-label", rotulo);
+            botao.addEventListener("click", aoClicar);
+            return botao;
+        }
+
+        // Explica em português os erros mais comuns de JSON digitado à mão.
+        function explicarErroJson(texto, erro) {
+            if (/'[^']*'/.test(texto)) return "JSON só aceita aspas duplas. Troque <code>'texto'</code> por <code>\"texto\"</code>.";
+            if (/,\s*[}\]]/.test(texto)) return "Tem uma vírgula sobrando antes de <code>}</code> ou <code>]</code>. Remova a vírgula depois do último campo.";
+            if (/[{,]\s*[A-Za-z_$][\w$]*\s*:/.test(texto)) return "O nome de cada campo precisa estar entre aspas duplas, por exemplo <code>\"titulo\": \"Estudar\"</code>.";
+            if (/"\s*\n\s*"/.test(texto)) return "Parece faltar uma vírgula entre dois campos.";
+            if ((texto.match(/{/g) || []).length !== (texto.match(/}/g) || []).length) return "A quantidade de <code>{</code> e <code>}</code> não bate. Confira se todas as chaves foram fechadas.";
+            if (/\b(True|False|NULL|None|undefined)\b/.test(texto)) return "Em JSON, use <code>true</code>, <code>false</code> e <code>null</code> em minúsculas. <code>undefined</code> não existe em JSON.";
+            return `JSON inválido: ${escapar(erro.message)}`;
+        }
+
+        // =====================================================================
+        // MÉTODO
+        // =====================================================================
+
+        function desenharMetodos() {
+            for (const metodo of Object.keys(METODOS)) {
+                const botao = criarElemento("button", { type: "button", className: "metodo", textContent: metodo });
+                botao.dataset.metodo = metodo;
+                botao.addEventListener("click", () => escolherMetodo(metodo));
+                elementos.metodos.append(botao);
             }
         }
 
-        function showResponse(data) {
-            responseOutput.textContent = typeof data === "string"
-                ? data
-                : JSON.stringify(data, null, 2);
+        function escolherMetodo(metodo) {
+            estado.metodo = metodo;
+            for (const botao of elementos.metodos.children) {
+                botao.setAttribute("aria-pressed", String(botao.dataset.metodo === metodo));
+            }
+            elementos.explicaMetodo.dataset.metodo = metodo;
+            elementos.explicaMetodo.innerHTML = METODOS[metodo].texto;
+
+            const temBody = METODOS[metodo].body;
+            elementos.blocoBody.hidden = !temBody;
+            elementos.semBody.hidden = temBody;
+            elementos.textoSemBody.textContent = `${metodo} não envia body. Os dados vão no caminho (parâmetros) ou nos query params.`;
+            atualizarTudo();
         }
 
-        async function sendRequest(event) {
-            event.preventDefault();
-            let url;
+        // =====================================================================
+        // PARÂMETROS DA ROTA (:id) E QUERY PARAMS
+        // =====================================================================
 
-            try {
-                url = makeUrl();
-                const headers = parseJson(headersInput.value, "Cabeçalhos");
-                const options = { method: method.value, headers };
+        function nomesDosParams() {
+            const caminho = elementos.caminho.value.split("?")[0];
+            return [...caminho.matchAll(/:([A-Za-z_]\w*)/g)].map((m) => m[1]);
+        }
 
-                if (hasBody() && bodyInput.value.trim()) {
-                    options.body = JSON.stringify(parseJson(bodyInput.value, "Corpo"));
-                    if (!options.headers["Content-Type"] && !options.headers["content-type"]) {
-                        options.headers["Content-Type"] = "application/json";
-                    }
+        function desenharParamsRota() {
+            const nomes = nomesDosParams();
+            elementos.blocoParamsRota.hidden = nomes.length === 0;
+            const atuais = [...elementos.paramsRota.querySelectorAll("input")].map((i) => i.dataset.nome).join(",");
+            if (atuais === nomes.join(",")) return;
+
+            elementos.paramsRota.replaceChildren();
+            for (const nome of nomes) {
+                const entrada = criarElemento("input", {
+                    type: "text",
+                    className: "mono",
+                    value: estado.valoresParams[nome] ?? "",
+                    placeholder: nome === "id" ? "ex.: 1" : `valor de ${nome}`,
+                });
+                entrada.dataset.nome = nome;
+                entrada.setAttribute("aria-label", `Valor de :${nome}`);
+                entrada.addEventListener("input", () => {
+                    estado.valoresParams[nome] = entrada.value;
+                    atualizarTudo();
+                });
+                const linha = criarElemento("label", { className: "linha-campo linha-param-rota" }, [
+                    criarElemento("span", { className: "nome-param", textContent: `:${nome}` }),
+                    entrada,
+                ]);
+                elementos.paramsRota.append(linha);
+            }
+        }
+
+        function adicionarLinhaChaveValor(container, chave = "", valor = "", rotulos) {
+            const entradaChave = criarElemento("input", { type: "text", className: "mono", value: chave, placeholder: rotulos.chave });
+            const entradaValor = criarElemento("input", { type: "text", className: "mono", value: valor, placeholder: rotulos.valor });
+            entradaChave.setAttribute("aria-label", rotulos.chave);
+            entradaValor.setAttribute("aria-label", rotulos.valor);
+            const linha = criarElemento("div", { className: "linha-campo linha-param" });
+            linha.append(entradaChave, entradaValor, botaoRemover(`Remover ${rotulos.chave}`, () => { linha.remove(); atualizarTudo(); }));
+            linha.addEventListener("input", atualizarTudo);
+            container.append(linha);
+            return entradaChave;
+        }
+
+        function lerChaveValor(container) {
+            return [...container.children]
+                .map((linha) => [...linha.querySelectorAll("input")].map((i) => i.value.trim()))
+                .filter(([chave]) => chave);
+        }
+
+        // Se o aluno digitar "/tarefas?concluida=true", o trecho depois do "?"
+        // vira linhas de query params, para ficar claro o que é cada parte.
+        function moverQueryDoCaminho() {
+            const [caminho, query] = elementos.caminho.value.split("?");
+            if (query === undefined) return;
+            elementos.caminho.value = caminho;
+            for (const [chave, valor] of new URLSearchParams(query)) {
+                adicionarLinhaChaveValor(elementos.paramsQuery, chave, valor, { chave: "nome do filtro", valor: "valor" });
+            }
+            atualizarTudo();
+        }
+
+        // =====================================================================
+        // BODY: MODO CAMPOS
+        // =====================================================================
+
+        function adicionarCampoBody(nome = "", tipo = "texto", valor = "") {
+            const entradaNome = criarElemento("input", { type: "text", className: "mono", value: nome, placeholder: "nome do campo" });
+            entradaNome.setAttribute("aria-label", "Nome do campo");
+
+            const seletorTipo = criarElemento("select");
+            seletorTipo.setAttribute("aria-label", "Tipo do valor");
+            for (const [id, rotulo] of TIPOS) seletorTipo.append(new Option(rotulo, id, false, id === tipo));
+
+            const celulaValor = criarElemento("div", { className: "valor-campo" });
+            const linha = criarElemento("div", { className: "linha-campo" });
+
+            function desenharValor(valorInicial) {
+                let entrada;
+                if (seletorTipo.value === "booleano") {
+                    entrada = criarElemento("select", { className: "mono" });
+                    entrada.append(new Option("true", "true"), new Option("false", "false"));
+                    entrada.value = String(valorInicial) === "true" ? "true" : "false";
+                } else if (seletorTipo.value === "nulo") {
+                    entrada = criarElemento("input", { type: "text", className: "mono", value: "null", disabled: true });
+                } else {
+                    entrada = criarElemento("input", {
+                        type: "text",
+                        className: "mono",
+                        value: valorInicial ?? "",
+                        placeholder: { texto: "Estudar SQL", numero: "10", json: '["a", "b"]' }[seletorTipo.value],
+                    });
+                    if (seletorTipo.value === "numero") entrada.inputMode = "decimal";
                 }
+                entrada.setAttribute("aria-label", "Valor do campo");
+                celulaValor.replaceChildren(entrada);
+            }
 
-                status.className = "";
-                status.textContent = `Enviando ${method.value} ${url}...`;
-                sendButton.disabled = true;
+            seletorTipo.addEventListener("change", () => {
+                const anterior = celulaValor.firstChild?.value ?? "";
+                desenharValor(seletorTipo.value === "nulo" ? "" : anterior);
+                camposParaJson();
+            });
 
-                const response = await fetch(url, options);
-                const text = await response.text();
-                let data = text;
+            desenharValor(valor);
+            linha.append(entradaNome, seletorTipo, celulaValor, botaoRemover("Remover campo", () => { linha.remove(); camposParaJson(); }));
+            linha.addEventListener("input", camposParaJson);
+            elementos.camposBody.append(linha);
+            return entradaNome;
+        }
 
-                try { data = text ? JSON.parse(text) : "(resposta sem conteúdo)"; } catch { }
+        // Lê as linhas de campos e devolve { objeto, problemas }.
+        function lerCampos() {
+            const objeto = {};
+            const problemas = [];
+            const vistos = new Set();
 
-                status.className = response.ok ? "ok" : "error";
-                status.textContent = `${response.status} ${response.statusText}`;
-                showResponse(data);
-            } catch (error) {
-                status.className = "error";
-                status.textContent = "Erro na requisição";
-                showResponse({ erro: error.message, url });
-            } finally {
-                sendButton.disabled = false;
+            for (const linha of elementos.camposBody.children) {
+                const [entradaNome, seletorTipo] = linha.querySelectorAll("input, select");
+                const entradaValor = linha.querySelector(".valor-campo > *");
+                const nome = entradaNome.value.trim();
+                const bruto = entradaValor.value;
+                if (!nome) {
+                    if (bruto.trim() && seletorTipo.value !== "nulo") problemas.push("Há um valor sem nome de campo.");
+                    continue;
+                }
+                if (vistos.has(nome)) problemas.push(`O campo <code>${escapar(nome)}</code> aparece duas vezes. Só o último vale.`);
+                vistos.add(nome);
+
+                switch (seletorTipo.value) {
+                    case "numero": {
+                        const numero = Number(bruto.replace(",", "."));
+                        if (bruto.trim() === "" || Number.isNaN(numero)) {
+                            problemas.push(`<code>${escapar(nome)}</code> está como número, mas <code>${escapar(bruto || "(vazio)")}</code> não é um número.`);
+                        }
+                        objeto[nome] = Number.isNaN(numero) ? bruto : numero;
+                        break;
+                    }
+                    case "booleano": objeto[nome] = bruto === "true"; break;
+                    case "nulo": objeto[nome] = null; break;
+                    case "json":
+                        try { objeto[nome] = JSON.parse(bruto); } catch {
+                            problemas.push(`O valor de <code>${escapar(nome)}</code> não é uma lista ou objeto JSON válido (ex.: <code>["a", "b"]</code>).`);
+                            objeto[nome] = bruto;
+                        }
+                        break;
+                    default:
+                        objeto[nome] = bruto;
+                        if (/^-?\d+([.,]\d+)?$/.test(bruto.trim())) {
+                            problemas.push(`<code>${escapar(nome)}</code> vai como texto <code>"${escapar(bruto)}"</code>. Se a API espera número, mude o tipo para Número.`);
+                        } else if (bruto === "true" || bruto === "false") {
+                            problemas.push(`<code>${escapar(nome)}</code> vai como texto <code>"${bruto}"</code>. Para booleano, mude o tipo para true / false.`);
+                        }
+                }
+            }
+            return { objeto, problemas };
+        }
+
+        function camposParaJson() {
+            const { objeto } = lerCampos();
+            elementos.bodyJson.value = Object.keys(objeto).length ? JSON.stringify(objeto, null, 2) : "";
+            atualizarTudo();
+        }
+
+        function tipoDoValor(valor) {
+            if (valor === null) return ["nulo", ""];
+            if (typeof valor === "boolean") return ["booleano", String(valor)];
+            if (typeof valor === "number") return ["numero", String(valor)];
+            if (typeof valor === "object") return ["json", JSON.stringify(valor)];
+            return ["texto", String(valor)];
+        }
+
+        function preencherCampos(objeto) {
+            elementos.camposBody.replaceChildren();
+            for (const [nome, valor] of Object.entries(objeto)) {
+                const [tipo, texto] = tipoDoValor(valor);
+                adicionarCampoBody(nome, tipo, texto);
+            }
+            if (!elementos.camposBody.children.length) adicionarCampoBody();
+        }
+
+        function usarBody(objeto) {
+            preencherCampos(objeto);
+            elementos.bodyJson.value = JSON.stringify(objeto, null, 2);
+            atualizarTudo();
+        }
+
+        // =====================================================================
+        // BODY: TROCA ENTRE CAMPOS E JSON
+        // =====================================================================
+
+        function escolherModoBody(modo) {
+            if (modo === "campos" && estado.modoBody === "json") {
+                const texto = elementos.bodyJson.value.trim();
+                if (texto) {
+                    let objeto;
+                    try { objeto = JSON.parse(texto); } catch (erro) {
+                        mostrarMensagemBody("erro", `${explicarErroJson(texto, erro)} Corrija o JSON para voltar ao modo Campos.`);
+                        return;
+                    }
+                    if (!objeto || typeof objeto !== "object" || Array.isArray(objeto)) {
+                        mostrarMensagemBody("aviso", "O modo Campos só monta objetos <code>{ }</code>. Para enviar uma lista, continue no modo JSON.");
+                        return;
+                    }
+                    preencherCampos(objeto);
+                } else {
+                    preencherCampos({});
+                }
+            }
+            estado.modoBody = modo;
+            elementos.modoCampos.hidden = modo !== "campos";
+            elementos.modoJson.hidden = modo !== "json";
+            elementos.abaCampos.setAttribute("aria-selected", String(modo === "campos"));
+            elementos.abaJson.setAttribute("aria-selected", String(modo === "json"));
+            atualizarTudo();
+        }
+
+        function mostrarMensagemBody(tipo, html) {
+            elementos.mensagemBody.innerHTML = html ? `<p class="mensagem ${tipo}">${html}</p>` : "";
+        }
+
+        // Valida o body atual. Devolve { ok, texto } (texto = JSON a enviar ou "").
+        function validarBody() {
+            if (!METODOS[estado.metodo].body) return { ok: true, texto: "" };
+
+            if (estado.modoBody === "campos") {
+                const { objeto, problemas } = lerCampos();
+                const vazio = Object.keys(objeto).length === 0;
+                const erros = problemas.filter((p) => !p.includes("vai como texto") && !p.includes("duas vezes"));
+                if (erros.length) {
+                    mostrarMensagemBody("erro", erros.join("<br>"));
+                    return { ok: false, texto: JSON.stringify(objeto) };
+                }
+                if (problemas.length) mostrarMensagemBody("aviso", problemas.join("<br>"));
+                else if (vazio) mostrarMensagemBody("aviso", `O body está vazio. ${estado.metodo} normalmente precisa de dados: adicione campos ou use um modelo.`);
+                else mostrarMensagemBody("ok", "Body pronto para enviar.");
+                return { ok: true, texto: vazio ? "" : JSON.stringify(objeto, null, 2) };
+            }
+
+            const texto = elementos.bodyJson.value.trim();
+            if (!texto) {
+                mostrarMensagemBody("aviso", `O body está vazio. ${estado.metodo} normalmente precisa de dados.`);
+                return { ok: true, texto: "" };
+            }
+            try {
+                const valor = JSON.parse(texto);
+                if (typeof valor !== "object" || valor === null) {
+                    mostrarMensagemBody("aviso", "O body é um JSON válido, mas não é um objeto <code>{ }</code> nem uma lista <code>[ ]</code>. APIs costumam esperar um objeto.");
+                } else {
+                    mostrarMensagemBody("ok", "JSON válido.");
+                }
+                return { ok: true, texto: JSON.stringify(valor, null, 2) };
+            } catch (erro) {
+                mostrarMensagemBody("erro", explicarErroJson(texto, erro));
+                return { ok: false, texto };
             }
         }
 
-        method.addEventListener("change", updateBodyField);
-        form.addEventListener("submit", sendRequest);
-        updateBodyField();
+        // =====================================================================
+        // MONTAGEM DA REQUISIÇÃO
+        // =====================================================================
+
+        function montarRequisicao() {
+            const problemas = [];
+            let base = elementos.baseUrl.value.trim().replace(/\/+$/, "");
+            if (!base) problemas.push("Informe o endereço da API.");
+            if (base && !/^https?:\/\//i.test(base)) base = `http://${base}`;
+
+            let caminho = elementos.caminho.value.trim().split("?")[0];
+            if (caminho && !caminho.startsWith("/")) caminho = `/${caminho}`;
+
+            caminho = caminho.replace(/:([A-Za-z_]\w*)/g, (trecho, nome) => {
+                const valor = (estado.valoresParams[nome] ?? "").trim();
+                if (!valor) {
+                    problemas.push(`Preencha o valor de <code>:${nome}</code> em Parâmetros da rota.`);
+                    return trecho;
+                }
+                return encodeURIComponent(valor);
+            });
+
+            const query = new URLSearchParams(lerChaveValor(elementos.paramsQuery));
+            const textoQuery = query.toString();
+            const url = `${base}${caminho}${textoQuery ? `?${textoQuery}` : ""}`;
+
+            const cabecalhos = {};
+            for (const [chave, valor] of lerChaveValor(elementos.cabecalhos)) cabecalhos[chave] = valor;
+
+            const body = validarBody();
+            if (!body.ok) problemas.push("O body tem um erro. Veja a mensagem em Body.");
+            if (body.texto && !Object.keys(cabecalhos).some((c) => c.toLowerCase() === "content-type")) {
+                cabecalhos["Content-Type"] = "application/json";
+            }
+
+            return { metodo: estado.metodo, url, caminho, textoQuery, cabecalhos, body: body.texto, problemas };
+        }
+
+        function desenharMensagemHttp(requisicao) {
+            let host = "";
+            try { host = new URL(requisicao.url).host; } catch { host = "(endereço inválido)"; }
+
+            const linhas = [
+                `<span class="linha-inicial">${escapar(requisicao.metodo)} ${escapar(requisicao.caminho || "/")}${requisicao.textoQuery ? escapar(`?${requisicao.textoQuery}`) : ""} HTTP/1.1</span>`,
+                `<span class="cab-nome">Host:</span> ${escapar(host)}`,
+                ...Object.entries(requisicao.cabecalhos).map(([c, v]) => `<span class="cab-nome">${escapar(c)}:</span> ${escapar(v)}`),
+                "",
+                requisicao.body
+                    ? colorirJson(requisicao.body)
+                    : `<span class="comentario">${METODOS[requisicao.metodo].body ? "(body vazio)" : "(sem body)"}</span>`,
+            ];
+            elementos.httpRequisicao.innerHTML = linhas.join("\n");
+
+            const aspas = (texto) => `'${texto.replaceAll("'", "'\\''")}'`;
+            const partes = [`curl -X ${requisicao.metodo} ${aspas(requisicao.url)}`];
+            for (const [c, v] of Object.entries(requisicao.cabecalhos)) partes.push(`  -H ${aspas(`${c}: ${v}`)}`);
+            if (requisicao.body) partes.push(`  -d ${aspas(JSON.stringify(JSON.parse(requisicao.body)))}`);
+            elementos.curl.textContent = partes.join(" \\\n");
+        }
+
+        function atualizarTudo() {
+            desenharParamsRota();
+            const requisicao = montarRequisicao();
+            elementos.urlFinal.textContent = requisicao.url;
+            try { desenharMensagemHttp(requisicao); } catch { elementos.curl.textContent = "(corrija o body para gerar o comando)"; }
+            elementos.mensagemEnvio.innerHTML = requisicao.problemas.length ? requisicao.problemas[0] : "";
+            return requisicao;
+        }
+
+        // =====================================================================
+        // ENVIO E RESPOSTA
+        // =====================================================================
+
+        const STATUS = {
+            200: "Deu certo. A API devolveu os dados pedidos.",
+            201: "Criado. O recurso novo foi salvo, e a resposta costuma trazer o registro criado (com o id).",
+            204: "Deu certo, sem conteúdo. A operação foi feita e a API não manda body (comum em DELETE).",
+            400: "Requisição inválida. A API recusou os dados enviados: confira o body, os nomes dos campos e os tipos.",
+            401: "Não autenticado. A rota exige login ou token.",
+            403: "Proibido. A API entendeu o pedido, mas não permite essa operação.",
+            404: "Não encontrado.",
+            405: "Método não permitido para essa rota.",
+            409: "Conflito. Os dados batem com uma regra da API, por exemplo um e-mail já cadastrado.",
+            422: "Dados com formato certo, mas que não passam nas regras da API.",
+            500: "Erro interno no servidor. O código da API lançou um erro: olhe o terminal onde está rodando o npm start.",
+        };
+
+        function explicarStatus(resposta, dados, texto, requisicao) {
+            const partes = [];
+            const codigo = resposta.status;
+            const htmlExpress = typeof texto === "string" && /<pre>Cannot (GET|POST|PUT|PATCH|DELETE) /.test(texto);
+
+            if (codigo === 404 && htmlExpress) {
+                partes.push(`<p><strong>A rota não existe.</strong> O Express não encontrou nenhuma rota <code>${escapar(requisicao.metodo)} ${escapar(requisicao.caminho)}</code>.</p>`);
+                partes.push("<ul><li>A rota foi registrada no <code>server.js</code> com esse método?</li><li>O caminho está escrito igual (singular, plural, letras)?</li><li>Você reiniciou a API depois de mudar o código? (o <code>npm run dev</code> reinicia sozinho)</li></ul>");
+            } else if (codigo === 404) {
+                partes.push("<p><strong>A rota existe, mas o recurso não foi encontrado.</strong> Normalmente o id informado não existe. Liste os registros para ver os ids válidos.</p>");
+            } else {
+                const texto404 = STATUS[codigo] ?? (codigo >= 500 ? STATUS[500] : codigo >= 400 ? STATUS[400] : "A requisição foi processada.");
+                partes.push(`<p><strong>${escapar(texto404)}</strong></p>`);
+            }
+
+            if (dados && typeof dados === "object" && !Array.isArray(dados)) {
+                const mensagem = dados.mensagem ?? dados.message ?? dados.erro ?? dados.error;
+                if (mensagem && codigo >= 400) partes.push(`<p>A API explicou: <em>${escapar(typeof mensagem === "string" ? mensagem : JSON.stringify(mensagem))}</em></p>`);
+                if (codigo === 201 && dados.id !== undefined) partes.push(`<p>O registro criado ganhou o id <code>${escapar(dados.id)}</code>.</p>`);
+            }
+            if (Array.isArray(dados)) {
+                partes.push(`<p>A resposta é uma lista com <strong>${dados.length}</strong> ${dados.length === 1 ? "item" : "itens"}.${dados.length ? " Veja a aba Tabela." : ""}</p>`);
+            }
+            if (codigo === 200 && requisicao.metodo === "POST") {
+                partes.push("<p>Dica: ao criar um recurso, o status mais adequado é <code>201</code>, e não <code>200</code>.</p>");
+            }
+            if (codigo === 400 && METODOS[requisicao.metodo].body && !requisicao.body) {
+                partes.push("<p>O body foi enviado vazio. A API provavelmente esperava dados.</p>");
+            }
+            elementos.explicacao.innerHTML = partes.join("");
+        }
+
+        function explicarFalhaConexao(requisicao, erro) {
+            const paginaHttps = location.protocol === "https:" && requisicao.url.startsWith("http:");
+            elementos.status.className = "status falha";
+            elementos.status.textContent = "Sem resposta";
+            elementos.metricas.textContent = "";
+            elementos.areaResposta.hidden = true;
+            elementos.explicacao.innerHTML = `
+                <p><strong>A API não respondeu.</strong> O navegador não conseguiu falar com <code>${escapar(requisicao.url)}</code>.</p>
+                <ul>
+                    <li>A API está rodando? Confira o terminal: rode <code>npm start</code> na pasta do projeto.</li>
+                    <li>O endereço e a porta estão certos? O terminal mostra algo como <code>API disponível em http://localhost:3000</code>.</li>
+                    <li>A API caiu com erro? Se o terminal mostra um erro, ela parou e precisa ser iniciada de novo.</li>
+                    <li>Se a API está rodando, pode ser bloqueio de CORS: o <code>server.js</code> precisa liberar <code>Access-Control-Allow-Origin</code>.</li>
+                    ${paginaHttps ? "<li>Esta página está em <code>https</code> e a API em <code>http</code>: abra o arquivo direto do computador.</li>" : ""}
+                </ul>
+                <p class="ajuda">Detalhe técnico: ${escapar(erro.message)}</p>`;
+        }
+
+        function desenharTabela(dados) {
+            const lista = Array.isArray(dados) ? dados : dados && typeof dados === "object" ? [dados] : null;
+            if (!lista || !lista.length || !lista.every((item) => item && typeof item === "object" && !Array.isArray(item))) {
+                elementos.respostaTabela.innerHTML = '<p class="vazio" style="padding:12px">A tabela aparece quando a resposta é um objeto ou uma lista de objetos.</p>';
+                return;
+            }
+            const colunas = [...new Set(lista.flatMap((item) => Object.keys(item)))];
+            const formatar = (valor) => (valor === undefined ? "" : typeof valor === "object" && valor !== null ? JSON.stringify(valor) : String(valor));
+            elementos.respostaTabela.innerHTML = `<table class="dados"><thead><tr>${colunas.map((c) => `<th scope="col">${escapar(c)}</th>`).join("")}</tr></thead><tbody>${lista
+                .map((item) => `<tr>${colunas.map((c) => `<td>${escapar(formatar(item[c]))}</td>`).join("")}</tr>`)
+                .join("")}</tbody></table>`;
+        }
+
+        function escolherVisao(visao) {
+            const mapa = { corpo: [$("#verCorpo"), elementos.respostaCorpo], tabela: [$("#verTabela"), elementos.respostaTabela], cabecalhos: [$("#verCabecalhos"), elementos.respostaCabecalhos] };
+            for (const [nome, [aba, painel]] of Object.entries(mapa)) {
+                aba.setAttribute("aria-selected", String(nome === visao));
+                painel.hidden = nome !== visao;
+            }
+        }
+
+        async function enviar(evento) {
+            evento?.preventDefault();
+            const requisicao = atualizarTudo();
+            if (requisicao.problemas.length) {
+                elementos.mensagemEnvio.innerHTML = `<span class="mensagem erro" style="display:inline-block;margin:0">${requisicao.problemas[0]}</span>`;
+                return;
+            }
+
+            elementos.botaoEnviar.disabled = true;
+            elementos.botaoEnviar.textContent = "Enviando...";
+            elementos.status.className = "status espera";
+            elementos.status.textContent = "Aguardando a API...";
+            const inicio = performance.now();
+            const opcoes = { method: requisicao.metodo, headers: requisicao.cabecalhos };
+            if (requisicao.body) opcoes.body = requisicao.body;
+
+            try {
+                const resposta = await fetch(requisicao.url, opcoes);
+                const texto = await resposta.text();
+                const tempo = Math.round(performance.now() - inicio);
+                let dados = texto;
+                let ehJson = false;
+                try { if (texto) { dados = JSON.parse(texto); ehJson = true; } } catch { /* não é JSON */ }
+
+                const faixa = Math.floor(resposta.status / 100);
+                elementos.status.className = `status s${faixa}`;
+                elementos.status.textContent = `${resposta.status} ${resposta.statusText}`.trim();
+                elementos.metricas.textContent = `${tempo} ms · ${new Blob([texto]).size} bytes`;
+                explicarStatus(resposta, dados, texto, requisicao);
+
+                elementos.areaResposta.hidden = false;
+                if (!texto) {
+                    elementos.respostaCorpo.innerHTML = '<span class="comentario">(a resposta não tem body)</span>';
+                } else if (ehJson) {
+                    elementos.respostaCorpo.innerHTML = colorirJson(JSON.stringify(dados, null, 2));
+                } else {
+                    elementos.respostaCorpo.textContent = texto;
+                }
+                desenharTabela(ehJson ? dados : null);
+                elementos.respostaCabecalhos.innerHTML = [`<span class="linha-inicial">HTTP/1.1 ${resposta.status} ${escapar(resposta.statusText)}</span>`,
+                    ...[...resposta.headers].map(([c, v]) => `<span class="cab-nome">${escapar(c)}:</span> ${escapar(v)}`)].join("\n");
+                escolherVisao(Array.isArray(dados) && dados.length > 1 ? "tabela" : "corpo");
+                salvarNoHistorico(requisicao, resposta.status);
+            } catch (erro) {
+                explicarFalhaConexao(requisicao, erro);
+                salvarNoHistorico(requisicao, null);
+            } finally {
+                elementos.botaoEnviar.disabled = false;
+                elementos.botaoEnviar.textContent = "Enviar requisição";
+            }
+        }
+
+        // =====================================================================
+        // ATALHOS E HISTÓRICO
+        // =====================================================================
+
+        function aplicar({ metodo, caminho, params = {}, query = [], body, modoBody }) {
+            elementos.caminho.value = caminho;
+            Object.assign(estado.valoresParams, params);
+            elementos.paramsRota.replaceChildren();
+            elementos.paramsQuery.replaceChildren();
+            for (const [chave, valor] of query) adicionarLinhaChaveValor(elementos.paramsQuery, chave, valor, { chave: "nome do filtro", valor: "valor" });
+
+            if (typeof body === "string") {
+                elementos.bodyJson.value = body;
+                estado.modoBody = "json";
+                escolherModoBody(modoBody === "campos" ? "campos" : "json");
+            } else {
+                usarBody(body ?? {});
+                escolherModoBody("campos");
+            }
+            escolherMetodo(metodo);
+        }
+
+        function desenharAtalhos() {
+            const container = $("#atalhos");
+            for (const { grupo, rotas } of ATALHOS) {
+                const linha = criarElemento("div", { className: "grupo-atalho" }, [criarElemento("span", { textContent: grupo })]);
+                for (const rota of rotas) {
+                    const botao = criarElemento("button", { type: "button", className: "atalho" });
+                    const metodo = criarElemento("b", { textContent: rota.metodo });
+                    metodo.dataset.metodo = rota.metodo;
+                    metodo.style.color = "var(--cor-metodo)";
+                    botao.append(metodo, rota.nome);
+                    botao.title = `${rota.metodo} ${rota.caminho}${rota.query ? `?${new URLSearchParams(rota.query)}` : ""}`;
+                    botao.addEventListener("click", () => aplicar(rota));
+                    linha.append(botao);
+                }
+                container.append(linha);
+            }
+        }
+
+        function lerHistorico() {
+            try { return JSON.parse(localStorage.getItem(CHAVE_HISTORICO)) ?? []; } catch { return []; }
+        }
+
+        function gravarHistorico(lista) {
+            try { localStorage.setItem(CHAVE_HISTORICO, JSON.stringify(lista)); } catch { /* navegador sem armazenamento */ }
+        }
+
+        function salvarNoHistorico(requisicao, status) {
+            const item = {
+                metodo: requisicao.metodo,
+                base: elementos.baseUrl.value.trim(),
+                caminho: elementos.caminho.value.trim(),
+                params: { ...estado.valoresParams },
+                query: lerChaveValor(elementos.paramsQuery),
+                body: requisicao.body,
+                exibicao: `${requisicao.caminho}${requisicao.textoQuery ? `?${requisicao.textoQuery}` : ""}`,
+                status,
+            };
+            const lista = lerHistorico().filter((h) => !(h.metodo === item.metodo && h.exibicao === item.exibicao && h.body === item.body));
+            lista.unshift(item);
+            gravarHistorico(lista.slice(0, 12));
+            desenharHistorico();
+        }
+
+        function desenharHistorico() {
+            const lista = lerHistorico();
+            elementos.historico.replaceChildren();
+            elementos.historicoVazio.hidden = lista.length > 0;
+            for (const item of lista) {
+                const botao = criarElemento("button", { type: "button" });
+                botao.dataset.metodo = item.metodo;
+                const faixa = item.status ? `s${Math.floor(item.status / 100)}` : "falha";
+                botao.append(
+                    criarElemento("span", { className: "m", textContent: item.metodo }),
+                    criarElemento("span", { className: "c", textContent: item.exibicao }),
+                    criarElemento("span", { className: `st ${faixa}`, textContent: item.status ?? "sem resposta" }),
+                );
+                botao.title = item.body ? `Body: ${item.body}` : "Sem body";
+                botao.addEventListener("click", () => {
+                    if (item.base) elementos.baseUrl.value = item.base;
+                    aplicar({ ...item, body: item.body || undefined, modoBody: "campos" });
+                    elementos.formulario.scrollIntoView({ behavior: "smooth", block: "start" });
+                });
+                elementos.historico.append(criarElemento("li", {}, [botao]));
+            }
+        }
+
+        // =====================================================================
+        // EVENTOS
+        // =====================================================================
+
+        function copiar(texto, botao) {
+            const original = botao.textContent;
+            navigator.clipboard?.writeText(texto).then(
+                () => { botao.textContent = "Copiado"; setTimeout(() => { botao.textContent = original; }, 1500); },
+                () => { botao.textContent = "Não foi possível copiar"; setTimeout(() => { botao.textContent = original; }, 1500); },
+            );
+        }
+
+        elementos.formulario.addEventListener("submit", enviar);
+        document.addEventListener("keydown", (evento) => {
+            if ((evento.ctrlKey || evento.metaKey) && evento.key === "Enter") enviar(evento);
+        });
+
+        elementos.baseUrl.addEventListener("input", atualizarTudo);
+        elementos.caminho.addEventListener("input", atualizarTudo);
+        elementos.caminho.addEventListener("blur", moverQueryDoCaminho);
+        elementos.bodyJson.addEventListener("input", atualizarTudo);
+
+        $("#adicionarQuery").addEventListener("click", () => adicionarLinhaChaveValor(elementos.paramsQuery, "", "", { chave: "nome do filtro", valor: "valor" }).focus());
+        $("#adicionarCabecalho").addEventListener("click", () => adicionarLinhaChaveValor(elementos.cabecalhos, "", "", { chave: "nome do cabeçalho", valor: "valor" }).focus());
+        $("#adicionarCampo").addEventListener("click", () => adicionarCampoBody().focus());
+        $("#modeloTarefa").addEventListener("click", () => usarBody({ titulo: "Estudar SQL", descricao: "Revisar SELECT e INSERT", prioridade: "media", concluida: false }));
+        $("#modeloUsuario").addEventListener("click", () => usarBody({ nome: "Carla", email: "carla@email.com" }));
+
+        elementos.abaCampos.addEventListener("click", () => escolherModoBody("campos"));
+        elementos.abaJson.addEventListener("click", () => escolherModoBody("json"));
+        $("#formatarJson").addEventListener("click", () => {
+            try { elementos.bodyJson.value = JSON.stringify(JSON.parse(elementos.bodyJson.value), null, 2); atualizarTudo(); } catch { validarBody(); }
+        });
+
+        $("#verCorpo").addEventListener("click", () => escolherVisao("corpo"));
+        $("#verTabela").addEventListener("click", () => escolherVisao("tabela"));
+        $("#verCabecalhos").addEventListener("click", () => escolherVisao("cabecalhos"));
+        $("#copiarCurl").addEventListener("click", (e) => copiar(elementos.curl.textContent, e.currentTarget));
+        $("#copiarResposta").addEventListener("click", (e) => copiar(elementos.respostaCorpo.textContent, e.currentTarget));
+        $("#limparHistorico").addEventListener("click", () => { gravarHistorico([]); desenharHistorico(); });
+
+        // =====================================================================
+        // INÍCIO
+        // =====================================================================
+
+        desenharMetodos();
+        desenharAtalhos();
+        preencherCampos({});
+        desenharHistorico();
+        escolherMetodo("GET");
     </script>
 </body>
 
